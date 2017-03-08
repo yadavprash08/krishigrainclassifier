@@ -14,7 +14,7 @@ public class ClassifierFactory {
 
     @Resource private DataSetFactory dataSetFactory;
 
-    private Classifier getClassifier() {
+    public Classifier getClassifier() {
         Classifier c = new KNearestNeighbors(5);
         c.buildClassifier(dataSetFactory.getDataset());
         return c;
