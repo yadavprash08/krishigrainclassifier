@@ -113,7 +113,7 @@
         </dependency>
         <dependency>
             <groupId>com.prashant.java.krishi</groupId>
-            <artifactId>jama</artifactId>
+            <artifactId>Jama</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>
