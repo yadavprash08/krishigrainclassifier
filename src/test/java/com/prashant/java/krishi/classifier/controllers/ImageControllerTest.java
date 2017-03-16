@@ -1,5 +1,6 @@
 package com.prashant.java.krishi.classifier.controllers;
 
+import com.google.gson.Gson;
 import com.prashant.java.krishi.classifier.modal.WheatDimension;
 import ij.IJ;
 import ij.ImagePlus;
@@ -7,18 +8,10 @@ import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.imaging.Imaging;
-import org.apache.commons.imaging.ImagingConstants;
-import org.apache.commons.imaging.common.BufferedImageFactory;
 import org.apache.commons.imaging.common.ImageMetadata;
 import org.junit.Test;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.IntStream;
 
 /**
@@ -26,41 +19,37 @@ import java.util.stream.IntStream;
  */
 @Slf4j
 public class ImageControllerTest {
-    private static final Map<String, Object> IMAGE_OPEN_PARAMS = new HashMap<>();
-    public static class ManagedImageBufferedImageFactory implements
-        BufferedImageFactory {
+//    private static final Map<String, Object> IMAGE_OPEN_PARAMS = new HashMap<>();
+//    public static class ManagedImageBufferedImageFactory implements
+//        BufferedImageFactory {
+//
+//        @Override
+//        public BufferedImage getColorBufferedImage(final int width, final int height,
+//            final boolean hasAlpha) {
+//            final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+//            final GraphicsDevice gd = ge.getDefaultScreenDevice();
+//            final GraphicsConfiguration gc = gd.getDefaultConfiguration();
+//            return gc.createCompatibleImage(width, height,
+//                Transparency.TRANSLUCENT);
+//        }
+//
+//        @Override
+//        public BufferedImage getGrayscaleBufferedImage(final int width, final int height,
+//            final boolean hasAlpha) {
+//            return getColorBufferedImage(width, height, hasAlpha);
+//        }
+//    }
+//
+//    static {
+//        IMAGE_OPEN_PARAMS.put(ImagingConstants.BUFFERED_IMAGE_FACTORY, new ManagedImageBufferedImageFactory());
+//    }
 
-        @Override
-        public BufferedImage getColorBufferedImage(final int width, final int height,
-            final boolean hasAlpha) {
-            final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            final GraphicsDevice gd = ge.getDefaultScreenDevice();
-            final GraphicsConfiguration gc = gd.getDefaultConfiguration();
-            return gc.createCompatibleImage(width, height,
-                Transparency.TRANSLUCENT);
-        }
-
-        @Override
-        public BufferedImage getGrayscaleBufferedImage(final int width, final int height,
-            final boolean hasAlpha) {
-            return getColorBufferedImage(width, height, hasAlpha);
-        }
-    }
-
-    static {
-        IMAGE_OPEN_PARAMS.put(ImagingConstants.BUFFERED_IMAGE_FACTORY, new ManagedImageBufferedImageFactory());
-    }
+    private static final Gson GSON = new Gson();
 
     @Test
     public void readImage() throws Exception {
-        File input = new File("/Users/yprasha/Downloads/gp/3.jpg");
-        ImageMetadata metadata = Imaging.getMetadata(input);
-
-        log.info("Metadata Items Size: {}",metadata.getItems().size());
-        metadata.getItems()
-            .stream()
-            .forEach(this::processMetadata);
-
+        File input = new File("/Users/sakshiagarwal/gp/3.jpg");
+        log.info("{}",input.exists());
         ImagePlus img = IJ.openImage(input.getPath());
         IJ.run(img, "8-bit", "");
         IJ.run(img, "Make Binary", "");
@@ -84,8 +73,10 @@ public class ImageControllerTest {
         IntStream.range(0, rt.getCounter()-1)
             .mapToObj(i->rt.getRowAsString(i))
             .map(WheatDimension::createFromRow)
-            .map(Objects::toString)
+            .map(GSON::toJson)
             .forEach(log::info);
+
+
     }
 
     private void processMetadata(ImageMetadata.ImageMetadataItem imageMetadataItem) {

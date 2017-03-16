@@ -1,24 +1,13 @@
 package com.prashant.java.krishi.classifier.modal;
 
 import com.prashant.java.krishi.classifier.modal.wheat.InstanceTranslation;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import net.sf.javaml.core.DenseInstance;
+import lombok.*;
 import net.sf.javaml.core.Instance;
+import net.sf.javaml.core.SparseInstance;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Builder
@@ -65,56 +54,85 @@ public class WheatDimension {
     @InstanceTranslation(17)
     private Double solidity;
 
-    private final static Field[] allFieldsInSortedOrder;
+    private final static List<DimensionsMetadata> dimensionMetadatas = new ArrayList<>();
 
     private String immatureStatus;
-    private String leftInStatus;
+    private String particleType;
 
     static {
-        final TreeMap<Integer, Field> fieldMap = new TreeMap<>();
-        final List<Field> orderedFields = new ArrayList<>();
         Arrays.stream(WheatDimension.class.getDeclaredFields())
-            .filter(f -> Objects.nonNull(f.getAnnotation(InstanceTranslation.class)))
-            .forEachOrdered(f -> fieldMap.put(f.getAnnotation(InstanceTranslation.class).value(), f));
-        fieldMap.forEach((k, v) -> orderedFields.add(v));
-        allFieldsInSortedOrder = orderedFields.toArray(new Field[orderedFields.size()]);
+                .filter(f -> Objects.nonNull(f.getAnnotation(InstanceTranslation.class)))
+                .map(f -> new DimensionsMetadata(f))
+                .forEachOrdered(dimensionMetadatas::add);
+    }
+
+    @AllArgsConstructor
+    @Getter
+    private static class DimensionsMetadata {
+        private int instanceIndex;
+        private Field field;
+
+        public DimensionsMetadata(final Field f) {
+            final InstanceTranslation instanceTranslation = f.getAnnotation(InstanceTranslation.class);
+            this.instanceIndex = instanceTranslation.value();
+            this.field = f;
+
+
+        }
+
+        public void setFieldValue(Double[] dimensions, WheatDimension dimension) {
+            try {
+                field.setAccessible(true);
+                field.set(dimension, dimensions[instanceIndex]);
+            } catch (IllegalAccessException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+
+        public void updateInstance(WheatDimension wheatDimension, Instance instance) {
+            Optional<Double> fieldDoubleValue = getFieldDoubleValue(wheatDimension);
+            fieldDoubleValue.ifPresent(d -> instance.put(instanceIndex, d.doubleValue()));
+        }
+
+        private Optional<Double> getFieldDoubleValue(WheatDimension wheatDimension) {
+            try {
+                field.setAccessible(true);
+                Double aDouble = (Double) field.get(wheatDimension);
+                return Optional.ofNullable(aDouble);
+            } catch (Exception e) {
+                return Optional.empty();
+            }
+        }
     }
 
     public static WheatDimension createFromRow(String imageParticleRow) {
         final Double[] dimensions = Arrays.stream(StringUtils.split(imageParticleRow, "\t"))
-            .map(Double::parseDouble)
-            .collect(Collectors.toList())
-            .toArray(new Double[] {});
+                .map(Double::parseDouble)
+                .collect(Collectors.toList())
+                .toArray(new Double[]{});
         WheatDimension dimension = new WheatDimension();
-        Arrays.stream(allFieldsInSortedOrder).forEachOrdered(f -> setFieldValue(f, dimensions, dimension));
+        dimensionMetadatas.stream()
+                .filter(f -> f.getInstanceIndex() < dimensions.length)
+                .forEachOrdered(f -> f.setFieldValue(dimensions, dimension));
         return dimension;
     }
 
-    private static void setFieldValue(Field f, Double[] dimensions, WheatDimension dimension) {
-        InstanceTranslation instanceTranslation = f.getAnnotation(InstanceTranslation.class);
-        try {
-            f.set(dimension, dimensions[instanceTranslation.value()]);
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException(e);
-        }
+
+    public Instance immatureInstance() {
+        Instance instance = sparceInstance();
+        Optional.ofNullable(immatureStatus).ifPresent(instance::setClassValue);
+        return instance;
     }
 
-    public Instance toImmatureDatasetInstance() {
-        double[] instance = new double[allFieldsInSortedOrder.length];
-        for (int i = 0; i < allFieldsInSortedOrder.length; i++) {
-            final Double fieldDoubleValue = getFieldDoubleValue(allFieldsInSortedOrder[i]);
-            instance[i] = fieldDoubleValue == null ? -1 : fieldDoubleValue.doubleValue();
-        }
-        DenseInstance denseInstance = new DenseInstance(instance, this.immatureStatus);
-        return denseInstance;
+    public Instance foreignParticleStatus() {
+        Instance instance = sparceInstance();
+        Optional.ofNullable(particleType).ifPresent(instance::setClassValue);
+        return instance;
     }
 
-    private Double getFieldDoubleValue(Field field) {
-        try {
-            return (Double) field.get(this);
-        } catch (IllegalAccessException e) {
-            return null;
-        }
+    private Instance sparceInstance() {
+        Instance instance = new SparseInstance(dimensionMetadatas.size());
+        dimensionMetadatas.stream().forEach(f -> f.updateInstance(this, instance));
+        return instance;
     }
-
 }
