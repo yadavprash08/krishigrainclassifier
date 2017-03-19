@@ -23,7 +23,7 @@ public class WheatDimension {
     static {
         Arrays.stream(WheatDimension.class.getDeclaredFields())
                 .filter(f -> Objects.nonNull(f.getAnnotation(InstanceTranslation.class)))
-                .map(f -> new DimensionsMetadata(f))
+                .map(DimensionsMetadata::new)
                 .forEachOrdered(dimensionMetadatas::add);
     }
 
@@ -84,6 +84,14 @@ public class WheatDimension {
         return dimension;
     }
 
+    ParticleType particleType(){
+        return ParticleType.fromString(this.particleType);
+    }
+
+    ImmatureStatus immatureStatus(){
+        return ImmatureStatus.fromString(this.immatureStatus);
+    }
+
     public Instance immatureInstance() {
         Instance instance = sparseInstance();
         Optional.ofNullable(immatureStatus).ifPresent(instance::setClassValue);
@@ -92,7 +100,7 @@ public class WheatDimension {
 
     private Instance sparseInstance() {
         Instance instance = new SparseInstance(dimensionMetadatas.size());
-        dimensionMetadatas.stream().forEach(f -> f.updateInstance(this, instance));
+        dimensionMetadatas.forEach(f -> f.updateInstance(this, instance));
         return instance;
     }
 
@@ -108,13 +116,13 @@ public class WheatDimension {
         private int instanceIndex;
         private Field field;
 
-        public DimensionsMetadata(final Field f) {
+        DimensionsMetadata(final Field f) {
             final InstanceTranslation instanceTranslation = f.getAnnotation(InstanceTranslation.class);
             this.instanceIndex = instanceTranslation.value();
             this.field = f;
         }
 
-        public void setFieldValue(Double[] dimensions, WheatDimension dimension) {
+        void setFieldValue(Double[] dimensions, WheatDimension dimension) {
             try {
                 field.setAccessible(true);
                 field.set(dimension, dimensions[instanceIndex]);
@@ -123,9 +131,9 @@ public class WheatDimension {
             }
         }
 
-        public void updateInstance(WheatDimension wheatDimension, Instance instance) {
+        void updateInstance(WheatDimension wheatDimension, Instance instance) {
             Optional<Double> fieldDoubleValue = getFieldDoubleValue(wheatDimension);
-            fieldDoubleValue.ifPresent(d -> instance.put(instanceIndex, d.doubleValue()));
+            fieldDoubleValue.ifPresent(d -> instance.put(instanceIndex, d));
         }
 
         private Optional<Double> getFieldDoubleValue(WheatDimension wheatDimension) {

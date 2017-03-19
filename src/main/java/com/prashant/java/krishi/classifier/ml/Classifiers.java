@@ -15,5 +15,5 @@ public interface Classifiers {
      * @param dimension {@link WheatDimension} which represents the attribute of the wheat grain image.
      * @return WheatDimension with classified values.
      */
-    WheatDimension classify(@NonNull WheatDimension dimension);
+    WheatDimension classify(WheatDimension dimension);
 }

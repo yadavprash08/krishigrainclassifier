@@ -2,8 +2,7 @@ package com.prashant.java.krishi.classifier.app;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.prashant.java.krishi.classifier.io.ModalReader;
-import org.assertj.core.api.Assertions;
+import com.prashant.java.krishi.classifier.ml.Classifiers;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
@@ -23,6 +22,7 @@ public class Application {
             assertThat(app).isNotNull();
             final Injector injector = Guice.createInjector(app);
             assertThat(injector).isNotNull();
+
         } catch (CmdLineException e) {
             parser.printUsage(System.out);
             throw new RuntimeException("Invalid Arguments", e);
