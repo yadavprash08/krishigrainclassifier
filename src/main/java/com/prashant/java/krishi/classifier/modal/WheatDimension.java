@@ -2,6 +2,7 @@ package com.prashant.java.krishi.classifier.modal;
 
 import com.prashant.java.krishi.classifier.modal.wheat.InstanceTranslation;
 import lombok.*;
+import lombok.experimental.Wither;
 import net.sf.javaml.core.Instance;
 import net.sf.javaml.core.SparseInstance;
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +19,12 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class WheatDimension {
-
+    @Wither
+    private String fileName;
+    @Wither
+    private String filePath;
+    @Wither
+    private String fileParticleName;
     @InstanceTranslation(1)
     private Double area;
     @InstanceTranslation(2)
@@ -76,8 +82,6 @@ public class WheatDimension {
             final InstanceTranslation instanceTranslation = f.getAnnotation(InstanceTranslation.class);
             this.instanceIndex = instanceTranslation.value();
             this.field = f;
-
-
         }
 
         public void setFieldValue(Double[] dimensions, WheatDimension dimension) {

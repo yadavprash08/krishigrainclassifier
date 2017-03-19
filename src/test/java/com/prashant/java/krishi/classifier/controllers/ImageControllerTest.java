@@ -1,56 +1,71 @@
 package com.prashant.java.krishi.classifier.controllers;
 
 import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.prashant.java.krishi.classifier.modal.WheatDimension;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.imaging.common.ImageMetadata;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE;
 
 /**
  *
  */
 @Slf4j
+@RunWith(Parameterized.class)
 public class ImageControllerTest {
-//    private static final Map<String, Object> IMAGE_OPEN_PARAMS = new HashMap<>();
-//    public static class ManagedImageBufferedImageFactory implements
-//        BufferedImageFactory {
-//
-//        @Override
-//        public BufferedImage getColorBufferedImage(final int width, final int height,
-//            final boolean hasAlpha) {
-//            final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-//            final GraphicsDevice gd = ge.getDefaultScreenDevice();
-//            final GraphicsConfiguration gc = gd.getDefaultConfiguration();
-//            return gc.createCompatibleImage(width, height,
-//                Transparency.TRANSLUCENT);
-//        }
-//
-//        @Override
-//        public BufferedImage getGrayscaleBufferedImage(final int width, final int height,
-//            final boolean hasAlpha) {
-//            return getColorBufferedImage(width, height, hasAlpha);
-//        }
-//    }
-//
-//    static {
-//        IMAGE_OPEN_PARAMS.put(ImagingConstants.BUFFERED_IMAGE_FACTORY, new ManagedImageBufferedImageFactory());
-//    }
 
     private static final Gson GSON = new Gson();
 
+    @Parameter(0)
+    public File file;
+
+    @Parameter(1)
+    public String testName;
+
+    @Parameters(name = "File:# {1}")
+    public static Collection<Object[]> data() throws Exception {
+        return Files.list(Paths.get("/Users/yprasha/Downloads/gp"))
+            .filter(Files::isReadable)
+            .filter(Files::isRegularFile)
+            .map(Path::toFile)
+            .filter(f -> StringUtils.endsWithIgnoreCase(f.getName(), ".jpg"))
+            .map(f -> new Object[] { f, f.getName() })
+            .collect(Collectors.toList());
+    }
+
     @Test
     public void readImage() throws Exception {
-        File input = new File("/Users/sakshiagarwal/gp/3.jpg");
-        log.info("{}",input.exists());
-        ImagePlus img = IJ.openImage(input.getPath());
+        log.info("{}", file.exists());
+        ImagePlus img = IJ.openImage(file.getPath());
         IJ.run(img, "8-bit", "");
         IJ.run(img, "Make Binary", "");
         IJ.run(img, "Fill Holes", "");
@@ -60,26 +75,69 @@ public class ImageControllerTest {
         int min = 0; //minimum particle size
         int max = 99999; //max particle size
 
-        int options = ParticleAnalyzer.AREA + ParticleAnalyzer.ELLIPSE + ParticleAnalyzer.CIRCULARITY + ParticleAnalyzer.PERIMETER + ParticleAnalyzer.RECT + ParticleAnalyzer.FERET;
-        int measurements = Measurements.AREA + Measurements.MEAN + Measurements.MIN_MAX + Measurements.STD_DEV + Measurements.MODE + Measurements.MEDIAN + Measurements.AREA_FRACTION + Measurements.LIMIT;
+        int options =
+            ParticleAnalyzer.AREA + ParticleAnalyzer.ELLIPSE + ParticleAnalyzer.CIRCULARITY + ParticleAnalyzer.PERIMETER
+                + ParticleAnalyzer.RECT + ParticleAnalyzer.FERET;
+        int measurements =
+            Measurements.AREA + Measurements.MEAN + Measurements.MIN_MAX + Measurements.STD_DEV + Measurements.MODE
+                + Measurements.MEDIAN + Measurements.AREA_FRACTION + Measurements.LIMIT;
 
-        final ResultsTable rt = new ResultsTable();//if you define a resultsTable yourself, you can explicitly call it
-        // later
-
+        final ResultsTable rt = new ResultsTable();
         ParticleAnalyzer pa = new ParticleAnalyzer(measurements, options, rt, min, max);
-
         pa.analyze(img);
+        final Path newFilePath = getPath();
+        final SeekableByteChannel byteChannel = Files.newByteChannel(newFilePath, CREATE, APPEND);
+        final ResultToDimensions rslt = new ResultToDimensions(rt, byteChannel);
 
-        IntStream.range(0, rt.getCounter()-1)
-            .mapToObj(i->rt.getRowAsString(i))
-            .map(WheatDimension::createFromRow)
-            .map(GSON::toJson)
-            .forEach(log::info);
+        List<WheatDimension> dimensions = IntStream.range(0, rt.getCounter() - 1)
+            .mapToObj(rslt::dimension)
+            .map(rslt::writeToChannel)
+            .collect(Collectors.toList());
 
+        log.info("Content written to {}", newFilePath.toAbsolutePath().toString());
+        byteChannel.close();
 
     }
 
-    private void processMetadata(ImageMetadata.ImageMetadataItem imageMetadataItem) {
-        log.info(imageMetadataItem.toString());
+    private Path getPath() {
+        return Paths.get("./test_dataset.json").toAbsolutePath();
     }
+
+    @Test
+    public void readFileToObject() throws Exception {
+        final Path readPath = getPath();
+        final BufferedReader reader = Files.newBufferedReader(readPath);
+        final JsonReader jsonReader = new JsonReader(reader);
+        jsonReader.setLenient(true);
+        WheatDimension dimension;
+        while (!Objects.equals(jsonReader.peek(), JsonToken.END_DOCUMENT)) {
+            dimension = GSON.fromJson(jsonReader, WheatDimension.class);
+            System.out.println(dimension.toString());
+        }
+    }
+
+    @RequiredArgsConstructor
+    private class ResultToDimensions {
+        private final ResultsTable resultsTable;
+        private final SeekableByteChannel byteChannel;
+
+        private WheatDimension dimension(int i) {
+            WheatDimension dimension = WheatDimension.createFromRow(resultsTable.getRowAsString(i));
+            return dimension.withFileParticleName("ID:#" + i)
+                .withFilePath(file.getPath())
+                .withFileName(file.getName());
+        }
+
+        private WheatDimension writeToChannel(WheatDimension dimension) {
+            try {
+                String jsonContent = GSON.toJson(dimension) + "\n";
+                final ByteBuffer byteBuffer = ByteBuffer.wrap(jsonContent.getBytes());
+                byteChannel.write(byteBuffer);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+            return dimension;
+        }
+    }
+
 }
