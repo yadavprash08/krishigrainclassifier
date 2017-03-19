@@ -2,7 +2,7 @@ package com.prashant.java.krishi.classifier.app;
 
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
-import com.prashant.java.krishi.classifier.io.ModalFileSupplier;
+import com.prashant.java.krishi.classifier.io.ModalInputSupplier;
 import com.prashant.java.krishi.classifier.ml.Classifiers;
 import com.prashant.java.krishi.classifier.ml.KnnClassifiers;
 import lombok.NonNull;
@@ -20,7 +20,7 @@ public class AppModule extends AbstractModule {
     protected void configure() {
         bind(AppArguments.class).toInstance(appArguments);
         bind(Gson.class).toInstance(new Gson());
-        bind(ModalFileSupplier.class).toInstance(appArguments::getSourceFile);
+        bind(ModalInputSupplier.class).toInstance(appArguments::getModalInputSupplier);
         bind(Classifiers.class).to(KnnClassifiers.class);
     }
 }

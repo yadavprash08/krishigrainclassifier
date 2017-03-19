@@ -84,11 +84,11 @@ public class WheatDimension {
         return dimension;
     }
 
-    ParticleType particleType(){
+    public ParticleType particleType(){
         return ParticleType.fromString(this.particleType);
     }
 
-    ImmatureStatus immatureStatus(){
+    public ImmatureStatus immatureStatus(){
         return ImmatureStatus.fromString(this.immatureStatus);
     }
 

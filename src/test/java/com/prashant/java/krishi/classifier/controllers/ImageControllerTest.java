@@ -1,8 +1,6 @@
 package com.prashant.java.krishi.classifier.controllers;
 
 import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import com.prashant.java.krishi.classifier.modal.wheat.WheatDimension;
 import ij.IJ;
 import ij.ImagePlus;
@@ -12,13 +10,13 @@ import ij.plugin.filter.ParticleAnalyzer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,7 +26,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -63,6 +60,8 @@ public class ImageControllerTest {
 
     @Test
     public void readImage() throws Exception {
+        Assume.assumeTrue(StringUtils.equalsIgnoreCase(System.getProperty("createFile"), "dataset"));
+
         log.info("{}", file.exists());
         ImagePlus img = IJ.openImage(file.getPath());
         IJ.run(img, "8-bit", "");
@@ -99,7 +98,7 @@ public class ImageControllerTest {
     }
 
     private Path getPath() {
-        return Paths.get("./test_dataset.json").toAbsolutePath();
+        return Paths.get("basic_dataset.json").toAbsolutePath();
     }
 
     @RequiredArgsConstructor
@@ -108,10 +107,12 @@ public class ImageControllerTest {
         private final SeekableByteChannel byteChannel;
 
         private WheatDimension dimension(int i) {
-            WheatDimension dimension = WheatDimension.createFromRow(resultsTable.getRowAsString(i));
-            return dimension.withFileParticleName("ID:#" + i)
+            final String rowAsString = resultsTable.getRowAsString(i);
+            WheatDimension dimension = WheatDimension.createFromRow(rowAsString)
+                .withFileParticleName("ID:#" + i)
                 .withFilePath(file.getPath())
                 .withFileName(file.getName());
+            return new NativeClassifier(rowAsString, dimension).processWheatDimension();
         }
 
         private WheatDimension writeToChannel(WheatDimension dimension) {

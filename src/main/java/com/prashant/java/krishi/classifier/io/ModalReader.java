@@ -27,14 +27,14 @@ public class ModalReader {
     private final Collection<WheatDimension> dimensions;
 
     @Inject
-    public ModalReader(@NonNull Gson gson, @NonNull ModalFileSupplier modalFileSupplier) {
+    public ModalReader(@NonNull Gson gson, @NonNull ModalInputSupplier modalInputSupplier) {
         this.gson = gson;
-        this.dimensions = readAllWheatDimensions(modalFileSupplier.get());
+        this.dimensions = readAllWheatDimensions(modalInputSupplier);
     }
 
-    private Collection<WheatDimension> readAllWheatDimensions(@NonNull final File inputFile) {
+    private Collection<WheatDimension> readAllWheatDimensions(@NonNull ModalInputSupplier modalInputSupplier) {
         try {
-            final Reader fileReader = Files.newBufferedReader(inputFile.toPath());
+            final Reader fileReader = modalInputSupplier.get();
             JsonReader reader = new JsonReader(fileReader);
             reader.setLenient(true);
             List<WheatDimension> dimensions = new ArrayList<>();

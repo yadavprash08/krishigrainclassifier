@@ -12,13 +12,13 @@ import java.util.Arrays;
 @AllArgsConstructor
 @Getter
 public enum ParticleType {
-    GRAIN("wheat"), UNKNOWN("unknown");
+    BAD_WHEAT("wheat-leftOut"), GRAIN("wheat"), UNKNOWN("unknown");
     private String stringValue;
 
-    public static ParticleType fromString(String value){
+    public static ParticleType fromString(String value) {
         return Arrays
             .stream(values())
-            .filter(v->StringUtils.equalsIgnoreCase(v.stringValue, value))
+            .filter(v -> StringUtils.equalsIgnoreCase(v.stringValue, value))
             .findFirst()
             .orElse(UNKNOWN);
     }

@@ -2,7 +2,6 @@ package com.prashant.java.krishi.classifier.app;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.prashant.java.krishi.classifier.ml.Classifiers;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
