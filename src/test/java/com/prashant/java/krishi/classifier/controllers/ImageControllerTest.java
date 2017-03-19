@@ -3,13 +3,12 @@ package com.prashant.java.krishi.classifier.controllers;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
-import com.prashant.java.krishi.classifier.modal.WheatDimension;
+import com.prashant.java.krishi.classifier.modal.wheat.WheatDimension;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -101,19 +100,6 @@ public class ImageControllerTest {
 
     private Path getPath() {
         return Paths.get("./test_dataset.json").toAbsolutePath();
-    }
-
-    @Test
-    public void readFileToObject() throws Exception {
-        final Path readPath = getPath();
-        final BufferedReader reader = Files.newBufferedReader(readPath);
-        final JsonReader jsonReader = new JsonReader(reader);
-        jsonReader.setLenient(true);
-        WheatDimension dimension;
-        while (!Objects.equals(jsonReader.peek(), JsonToken.END_DOCUMENT)) {
-            dimension = GSON.fromJson(jsonReader, WheatDimension.class);
-            System.out.println(dimension.toString());
-        }
     }
 
     @RequiredArgsConstructor

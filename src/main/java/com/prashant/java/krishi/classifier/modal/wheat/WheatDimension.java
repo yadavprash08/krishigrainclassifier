@@ -1,6 +1,5 @@
-package com.prashant.java.krishi.classifier.modal;
+package com.prashant.java.krishi.classifier.modal.wheat;
 
-import com.prashant.java.krishi.classifier.modal.wheat.InstanceTranslation;
 import lombok.*;
 import lombok.experimental.Wither;
 import net.sf.javaml.core.Instance;
@@ -19,6 +18,15 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class WheatDimension {
+    private final static List<DimensionsMetadata> dimensionMetadatas = new ArrayList<>();
+
+    static {
+        Arrays.stream(WheatDimension.class.getDeclaredFields())
+                .filter(f -> Objects.nonNull(f.getAnnotation(InstanceTranslation.class)))
+                .map(f -> new DimensionsMetadata(f))
+                .forEachOrdered(dimensionMetadatas::add);
+    }
+
     @Wither
     private String fileName;
     @Wither
@@ -59,17 +67,39 @@ public class WheatDimension {
     private Double round;
     @InstanceTranslation(17)
     private Double solidity;
-
-    private final static List<DimensionsMetadata> dimensionMetadatas = new ArrayList<>();
-
+    @Wither
     private String immatureStatus;
+    @Wither
     private String particleType;
 
-    static {
-        Arrays.stream(WheatDimension.class.getDeclaredFields())
-                .filter(f -> Objects.nonNull(f.getAnnotation(InstanceTranslation.class)))
-                .map(f -> new DimensionsMetadata(f))
-                .forEachOrdered(dimensionMetadatas::add);
+    public static WheatDimension createFromRow(String imageParticleRow) {
+        final Double[] dimensions = Arrays.stream(StringUtils.split(imageParticleRow, "\t"))
+                .map(Double::parseDouble)
+                .collect(Collectors.toList())
+                .toArray(new Double[]{});
+        WheatDimension dimension = new WheatDimension();
+        dimensionMetadatas.stream()
+                .filter(f -> f.getInstanceIndex() < dimensions.length)
+                .forEachOrdered(f -> f.setFieldValue(dimensions, dimension));
+        return dimension;
+    }
+
+    public Instance immatureInstance() {
+        Instance instance = sparseInstance();
+        Optional.ofNullable(immatureStatus).ifPresent(instance::setClassValue);
+        return instance;
+    }
+
+    private Instance sparseInstance() {
+        Instance instance = new SparseInstance(dimensionMetadatas.size());
+        dimensionMetadatas.stream().forEach(f -> f.updateInstance(this, instance));
+        return instance;
+    }
+
+    public Instance particleTypeInstance() {
+        Instance instance = sparseInstance();
+        Optional.ofNullable(particleType).ifPresent(instance::setClassValue);
+        return instance;
     }
 
     @AllArgsConstructor
@@ -107,36 +137,5 @@ public class WheatDimension {
                 return Optional.empty();
             }
         }
-    }
-
-    public static WheatDimension createFromRow(String imageParticleRow) {
-        final Double[] dimensions = Arrays.stream(StringUtils.split(imageParticleRow, "\t"))
-                .map(Double::parseDouble)
-                .collect(Collectors.toList())
-                .toArray(new Double[]{});
-        WheatDimension dimension = new WheatDimension();
-        dimensionMetadatas.stream()
-                .filter(f -> f.getInstanceIndex() < dimensions.length)
-                .forEachOrdered(f -> f.setFieldValue(dimensions, dimension));
-        return dimension;
-    }
-
-
-    public Instance immatureInstance() {
-        Instance instance = sparceInstance();
-        Optional.ofNullable(immatureStatus).ifPresent(instance::setClassValue);
-        return instance;
-    }
-
-    public Instance foreignParticleStatus() {
-        Instance instance = sparceInstance();
-        Optional.ofNullable(particleType).ifPresent(instance::setClassValue);
-        return instance;
-    }
-
-    private Instance sparceInstance() {
-        Instance instance = new SparseInstance(dimensionMetadatas.size());
-        dimensionMetadatas.stream().forEach(f -> f.updateInstance(this, instance));
-        return instance;
     }
 }
