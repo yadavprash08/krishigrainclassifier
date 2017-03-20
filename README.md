@@ -5,11 +5,11 @@ To run this project there are two main requirements:
 2. Maven 
 # Usage Instructions
 
-* Install the local libraries into maven local repository required to build the project.
-> sh ./install-local-maven.sh
-
 * To install the package,download the source code
 > git clone https://github.com/yadavprash08/krishigrainclassifier.git
+
+* Install the local libraries into maven local repository required to build the project.
+> sh ./install-local-maven.sh
 
 * Once the repository is downloaded, move to the source git repository and run the command
 > mvn install
