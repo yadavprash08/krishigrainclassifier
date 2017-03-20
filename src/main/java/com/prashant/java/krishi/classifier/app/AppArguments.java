@@ -45,4 +45,8 @@ public class AppArguments {
             throw new RuntimeException(e);
         }
     }
+
+    public File getImageToProcess() {
+        return new File(processImage);
+    }
 }

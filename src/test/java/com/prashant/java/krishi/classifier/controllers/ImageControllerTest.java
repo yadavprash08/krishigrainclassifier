@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -49,7 +50,8 @@ public class ImageControllerTest {
 
     @Parameters(name = "File:# {1}")
     public static Collection<Object[]> data() throws Exception {
-        return Files.list(Paths.get("/Users/yprasha/Downloads/gp"))
+        String path = Optional.ofNullable(System.getProperty("sourceImagesPath")).orElse(".");
+        return Files.list(Paths.get(path))
             .filter(Files::isReadable)
             .filter(Files::isRegularFile)
             .map(Path::toFile)

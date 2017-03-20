@@ -2,6 +2,8 @@ package com.prashant.java.krishi.classifier.app;
 
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
+import com.prashant.java.krishi.classifier.imaging.ImageJProcessor;
+import com.prashant.java.krishi.classifier.imaging.ImageProcessor;
 import com.prashant.java.krishi.classifier.io.ModalInputSupplier;
 import com.prashant.java.krishi.classifier.ml.Classifiers;
 import com.prashant.java.krishi.classifier.ml.KnnClassifiers;
@@ -22,5 +24,6 @@ public class AppModule extends AbstractModule {
         bind(Gson.class).toInstance(new Gson());
         bind(ModalInputSupplier.class).toInstance(appArguments::getModalInputSupplier);
         bind(Classifiers.class).to(KnnClassifiers.class);
+        bind(ImageProcessor.class).to(ImageJProcessor.class);
     }
 }
