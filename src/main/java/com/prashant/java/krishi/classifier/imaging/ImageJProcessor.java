@@ -46,7 +46,10 @@ public class ImageJProcessor implements ImageProcessor {
 
         final ResultsTable resultTable = new ResultsTable();
         ParticleAnalyzer pa = new ParticleAnalyzer(measurements, options, resultTable, min, max);
+        pa.setHideOutputImage(true);
         pa.analyze(img);
+        img.close();
+
 
         final ResultToDimensions result = new ResultToDimensions(resultTable, imageFile);
 

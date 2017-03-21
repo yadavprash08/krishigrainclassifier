@@ -30,7 +30,7 @@ public class Application {
             WheatAnalysisReport report = imageAnalyzer.processImage(arguments.getImageToProcess());
             OutputStreamWriter writer = new OutputStreamWriter(System.out);
             report.generateReport(writer);
-
+            writer.flush();
         } catch (CmdLineException e) {
             parser.printUsage(System.out);
             throw new RuntimeException("Invalid Arguments", e);
