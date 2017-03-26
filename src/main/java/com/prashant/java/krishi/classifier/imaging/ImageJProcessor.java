@@ -1,6 +1,6 @@
 package com.prashant.java.krishi.classifier.imaging;
 
-import com.prashant.java.krishi.classifier.modal.wheat.WheatDimension;
+import com.prashant.java.krishi.classifier.modal.grain.GrainDimensions;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Measurements;
@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -30,7 +29,7 @@ public class ImageJProcessor implements ImageProcessor {
             + Measurements.MEDIAN + Measurements.AREA_FRACTION + Measurements.LIMIT;
 
     @Override
-    public Collection<WheatDimension> processImage(@NonNull File imageFile) {
+    public Collection<GrainDimensions> processImage(@NonNull File imageFile) {
 
         assertThat(imageFile.exists()).isTrue();
 
@@ -63,8 +62,8 @@ public class ImageJProcessor implements ImageProcessor {
         private final ResultsTable resultsTable;
         private final File file;
 
-        private WheatDimension dimension(int i) {
-            WheatDimension dimension = WheatDimension.createFromRow(resultsTable.getRowAsString(i));
+        private GrainDimensions dimension(int i) {
+            GrainDimensions dimension = GrainDimensions.createFromRow(resultsTable.getRowAsString(i));
             return dimension.withFileParticleName("ID:#" + i)
                 .withFilePath(file.getPath())
                 .withFileName(file.getName());

@@ -4,16 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.inject.Inject;
-import com.prashant.java.krishi.classifier.modal.wheat.WheatDimension;
+import com.prashant.java.krishi.classifier.modal.grain.GrainDimensions;
 import lombok.NonNull;
 import net.sf.javaml.core.Dataset;
 import net.sf.javaml.core.DefaultDataset;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +22,7 @@ import java.util.Objects;
  */
 public class ModalReader {
     private final Gson gson;
-    private final Collection<WheatDimension> dimensions;
+    private final Collection<GrainDimensions> dimensions;
 
     @Inject
     public ModalReader(@NonNull Gson gson, @NonNull ModalInputSupplier modalInputSupplier) {
@@ -32,14 +30,14 @@ public class ModalReader {
         this.dimensions = readAllWheatDimensions(modalInputSupplier);
     }
 
-    private Collection<WheatDimension> readAllWheatDimensions(@NonNull ModalInputSupplier modalInputSupplier) {
+    private Collection<GrainDimensions> readAllWheatDimensions(@NonNull ModalInputSupplier modalInputSupplier) {
         try {
             final Reader fileReader = modalInputSupplier.get();
             JsonReader reader = new JsonReader(fileReader);
             reader.setLenient(true);
-            List<WheatDimension> dimensions = new ArrayList<>();
+            List<GrainDimensions> dimensions = new ArrayList<>();
             while (!Objects.equals(reader.peek(), JsonToken.END_DOCUMENT)) {
-                dimensions.add(gson.fromJson(reader, WheatDimension.class));
+                dimensions.add(gson.fromJson(reader, GrainDimensions.class));
             }
             reader.close();
             return dimensions;
@@ -56,8 +54,8 @@ public class ModalReader {
     public Dataset immatureDataset() {
         final Dataset dataset = new DefaultDataset();
         this.dimensions.parallelStream()
-            .filter(w -> StringUtils.isNotBlank(w.getImmatureStatus()))
-            .map(WheatDimension::immatureInstance)
+            .filter(w -> StringUtils.isNotBlank(w.getGrainType()))
+            .map(GrainDimensions::grainTypeInstance)
             .forEach(dataset::add);
         return dataset;
     }
@@ -71,7 +69,7 @@ public class ModalReader {
         final Dataset dataset = new DefaultDataset();
         this.dimensions.parallelStream()
             .filter(w -> StringUtils.isNotBlank(w.getParticleType()))
-            .map(WheatDimension::particleTypeInstance)
+            .map(GrainDimensions::particleTypeInstance)
             .forEach(dataset::add);
         return dataset;
     }

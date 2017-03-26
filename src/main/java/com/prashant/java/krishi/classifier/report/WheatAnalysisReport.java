@@ -1,4 +1,8 @@
-package com.prashant.java.krishi.classifier.modal.wheat;
+package com.prashant.java.krishi.classifier.report;
+
+import com.prashant.java.krishi.classifier.modal.grain.GrainDimensions;
+import com.prashant.java.krishi.classifier.modal.grain.type.GrainType;
+import com.prashant.java.krishi.classifier.modal.grain.type.ParticleType;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -13,15 +17,16 @@ import java.util.function.Consumer;
 /**
  *
  */
-public class WheatAnalysisReport implements Consumer<WheatDimension> {
+public class WheatAnalysisReport implements Consumer<GrainDimensions> {
 
-    private final EnumMap<ParticleType, List<WheatDimension>> particleTypeMap = new EnumMap<>(ParticleType.class);
+    private final EnumMap<GrainType, List<GrainDimensions>> grainTypeMap = new EnumMap<>(GrainType.class);
     private final AtomicInteger totalParticles = new AtomicInteger(0);
 
     @Override
-    public void accept(WheatDimension dimension) {
+    public void accept(GrainDimensions dimension) {
+        System.out.println(dimension);
         totalParticles.incrementAndGet();
-        particleTypeMap.computeIfAbsent(dimension.particleType(), (p) -> new ArrayList<>()).add(dimension);
+        grainTypeMap.computeIfAbsent(dimension.grainType(), (p) -> new ArrayList<>()).add(dimension);
     }
 
     public void generateReport(Writer writer) throws IOException {
@@ -29,7 +34,7 @@ public class WheatAnalysisReport implements Consumer<WheatDimension> {
         writer.write(MessageFormat.format("Total particles identified: #{0}\n\n", i));
         writer.write("Particle Type Analysis\n");
         final StringBuilder builder = new StringBuilder();
-        particleTypeMap.forEach((k, v) -> {
+        grainTypeMap.forEach((k, v) -> {
             final int size = v.size();
             builder.append(k.toString()).append(": ")
                 .append(size).append("(")
@@ -41,7 +46,7 @@ public class WheatAnalysisReport implements Consumer<WheatDimension> {
         writer.write(builder.toString());
     }
 
-    private String dimensionToString(WheatDimension dimension) {
-        return Optional.ofNullable(dimension).map(WheatDimension::getFileParticleName).orElse("_____") + ", ";
+    private String dimensionToString(GrainDimensions dimension) {
+        return Optional.ofNullable(dimension).map(GrainDimensions::getFileParticleName).orElse("_____") + ", ";
     }
 }

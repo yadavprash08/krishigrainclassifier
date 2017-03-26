@@ -3,7 +3,7 @@ package com.prashant.java.krishi.classifier.app;
 import com.google.inject.Inject;
 import com.prashant.java.krishi.classifier.imaging.ImageProcessor;
 import com.prashant.java.krishi.classifier.ml.Classifiers;
-import com.prashant.java.krishi.classifier.modal.wheat.WheatAnalysisReport;
+import com.prashant.java.krishi.classifier.report.WheatAnalysisReport;
 import lombok.NonNull;
 
 import java.io.File;
@@ -21,7 +21,8 @@ public class ImageAnalyzer {
 
     public WheatAnalysisReport processImage(@NonNull File imageFile) {
         WheatAnalysisReport report = new WheatAnalysisReport();
-        imageProcessor.processImage(imageFile).parallelStream()
+        imageProcessor.processImage(imageFile)
+            .parallelStream()
             .map(classifiers::classify)
             .forEach(report);
         return report;

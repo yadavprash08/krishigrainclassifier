@@ -1,4 +1,4 @@
-package com.prashant.java.krishi.classifier.modal.wheat;
+package com.prashant.java.krishi.classifier.modal.grain.translation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,13 +1,32 @@
-package com.prashant.java.krishi.classifier.modal.wheat;
+package com.prashant.java.krishi.classifier.modal.grain;
 
-import lombok.*;
+import com.google.gson.Gson;
+import com.prashant.java.krishi.classifier.modal.grain.translation.InstanceTranslation;
+import com.prashant.java.krishi.classifier.modal.grain.type.GrainType;
+import com.prashant.java.krishi.classifier.modal.grain.type.ParticleType;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.Wither;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.javaml.core.Instance;
 import net.sf.javaml.core.SparseInstance;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Builder
@@ -17,11 +36,12 @@ import java.util.stream.Collectors;
 @ToString
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class WheatDimension {
+@Slf4j
+public class GrainDimensions {
     private final static List<DimensionsMetadata> dimensionMetadatas = new ArrayList<>();
 
     static {
-        Arrays.stream(WheatDimension.class.getDeclaredFields())
+        Arrays.stream(GrainDimensions.class.getDeclaredFields())
                 .filter(f -> Objects.nonNull(f.getAnnotation(InstanceTranslation.class)))
                 .map(DimensionsMetadata::new)
                 .forEachOrdered(dimensionMetadatas::add);
@@ -68,16 +88,16 @@ public class WheatDimension {
     @InstanceTranslation(17)
     private Double solidity;
     @Wither
-    private String immatureStatus;
+    private String grainType;
     @Wither
     private String particleType;
 
-    public static WheatDimension createFromRow(String imageParticleRow) {
+    public static GrainDimensions createFromRow(String imageParticleRow) {
         final Double[] dimensions = Arrays.stream(StringUtils.split(imageParticleRow, "\t"))
                 .map(Double::parseDouble)
                 .collect(Collectors.toList())
                 .toArray(new Double[]{});
-        WheatDimension dimension = new WheatDimension();
+        GrainDimensions dimension = new GrainDimensions();
         dimensionMetadatas.stream()
                 .filter(f -> f.getInstanceIndex() < dimensions.length)
                 .forEachOrdered(f -> f.setFieldValue(dimensions, dimension));
@@ -88,13 +108,13 @@ public class WheatDimension {
         return ParticleType.fromString(this.particleType);
     }
 
-    public ImmatureStatus immatureStatus(){
-        return ImmatureStatus.fromString(this.immatureStatus);
+    public GrainType grainType(){
+        return GrainType.fromString(this.grainType);
     }
 
-    public Instance immatureInstance() {
+    public Instance grainTypeInstance() {
         Instance instance = sparseInstance();
-        Optional.ofNullable(immatureStatus).ifPresent(instance::setClassValue);
+        Optional.ofNullable(grainType).ifPresent(instance::setClassValue);
         return instance;
     }
 
@@ -110,6 +130,17 @@ public class WheatDimension {
         return instance;
     }
 
+    public GrainDimensions writeToChannel(final Gson gson, final SeekableByteChannel channel) {
+        try {
+            final byte[] bytes = StringUtils.join(gson.toJson(this), "\n").getBytes();
+            final ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+            channel.write(byteBuffer);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+        return this;
+    }
+
     @AllArgsConstructor
     @Getter
     private static class DimensionsMetadata {
@@ -122,7 +153,7 @@ public class WheatDimension {
             this.field = f;
         }
 
-        void setFieldValue(Double[] dimensions, WheatDimension dimension) {
+        void setFieldValue(Double[] dimensions, GrainDimensions dimension) {
             try {
                 field.setAccessible(true);
                 field.set(dimension, dimensions[instanceIndex]);
@@ -131,15 +162,15 @@ public class WheatDimension {
             }
         }
 
-        void updateInstance(WheatDimension wheatDimension, Instance instance) {
-            Optional<Double> fieldDoubleValue = getFieldDoubleValue(wheatDimension);
+        void updateInstance(GrainDimensions grainDimensions, Instance instance) {
+            Optional<Double> fieldDoubleValue = getFieldDoubleValue(grainDimensions);
             fieldDoubleValue.ifPresent(d -> instance.put(instanceIndex, d));
         }
 
-        private Optional<Double> getFieldDoubleValue(WheatDimension wheatDimension) {
+        private Optional<Double> getFieldDoubleValue(GrainDimensions grainDimensions) {
             try {
                 field.setAccessible(true);
-                Double aDouble = (Double) field.get(wheatDimension);
+                Double aDouble = (Double) field.get(grainDimensions);
                 return Optional.ofNullable(aDouble);
             } catch (Exception e) {
                 return Optional.empty();

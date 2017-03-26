@@ -1,4 +1,4 @@
-package com.prashant.java.krishi.classifier.modal.wheat;
+package com.prashant.java.krishi.classifier.modal.grain.type;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,13 +11,11 @@ import java.util.Arrays;
  */
 @AllArgsConstructor
 @Getter
-public enum ImmatureStatus {
-
-    HEALTHY_WHEAT("fine-wheat-grain"), BROKEN_WHEAT("broken-wheat-grain"), UNKNOWN("unknown");
-
+public enum ParticleType {
+    WHEAT_GRAIN("wheat"), UNKNOWN("unknown");
     private String stringValue;
 
-    public static ImmatureStatus fromString(String value) {
+    public static ParticleType fromString(String value) {
         return Arrays
             .stream(values())
             .filter(v -> StringUtils.equalsIgnoreCase(v.stringValue, value))

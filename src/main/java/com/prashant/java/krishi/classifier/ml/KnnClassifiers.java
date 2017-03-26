@@ -2,7 +2,7 @@ package com.prashant.java.krishi.classifier.ml;
 
 import com.google.inject.Inject;
 import com.prashant.java.krishi.classifier.io.ModalReader;
-import com.prashant.java.krishi.classifier.modal.wheat.WheatDimension;
+import com.prashant.java.krishi.classifier.modal.grain.GrainDimensions;
 import lombok.NonNull;
 import net.sf.javaml.classification.Classifier;
 import net.sf.javaml.classification.KNearestNeighbors;
@@ -15,23 +15,23 @@ import java.util.Objects;
 public class KnnClassifiers implements Classifiers {
 
     @NonNull
-    private final Classifier immatureClassifier;
+    private final Classifier grainTypeClassifier;
 
     @NonNull
     private final Classifier particleTypeClassifier;
 
     @Inject
     public KnnClassifiers(@NonNull ModalReader modalReader) {
-        immatureClassifier = new KNearestNeighbors(5);
-        immatureClassifier.buildClassifier(modalReader.immatureDataset());
-        particleTypeClassifier = new KNearestNeighbors(5);
+        grainTypeClassifier = new KNearestNeighbors(2);
+        grainTypeClassifier.buildClassifier(modalReader.immatureDataset());
+        particleTypeClassifier = new KNearestNeighbors(2);
         particleTypeClassifier.buildClassifier(modalReader.foreignDataset());
     }
 
     @Override
-    public WheatDimension classify(@NonNull final WheatDimension dimension){
-        final String immatureState = Objects.toString(immatureClassifier.classify(dimension.immatureInstance()));
+    public GrainDimensions classify(@NonNull final GrainDimensions dimension){
+        final String grainType = Objects.toString(grainTypeClassifier.classify(dimension.grainTypeInstance()));
         final String particleType = Objects.toString(particleTypeClassifier.classify(dimension.particleTypeInstance()));
-        return dimension.withImmatureStatus(immatureState).withParticleType(particleType);
+        return dimension.withGrainType(grainType).withParticleType(particleType);
     }
 }

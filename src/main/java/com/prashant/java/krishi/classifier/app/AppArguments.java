@@ -26,6 +26,16 @@ public class AppArguments {
     @Option(name = "-input", usage = "Image which should be classified.")
     private String processImage;
 
+    @Option(name = "-addToSource", usage = "Adds the image to the source data store for further classification")
+    private boolean addToStore;
+
+    @Option(name = "-grainType", usage = "This is to state all the grain types in the image. All the grains in the "
+        + "image are classified using the same type only.")
+    private String grainType;
+
+    @Option(name = "-particleType", usage="To tell the application for all the grain types like wheat.")
+    private String particleType;
+
     @Option(name = "-help")
     private boolean help;
 
@@ -33,7 +43,7 @@ public class AppArguments {
 
 
     public Reader getModalInputSupplier() {
-        final Optional<Path> sourceFile = Optional.ofNullable(sourceDatasetFileName).map(File::new).map(File::toPath);
+        final Optional<Path> sourceFile = getSourceDataSetPath();
         try{
             if(sourceFile.isPresent()){
                 return Files.newBufferedReader(sourceFile.get());
@@ -44,6 +54,10 @@ public class AppArguments {
         } catch (IOException e){
             throw new RuntimeException(e);
         }
+    }
+
+    public Optional<Path> getSourceDataSetPath() {
+        return Optional.ofNullable(sourceDatasetFileName).map(File::new).map(File::toPath);
     }
 
     public File getImageToProcess() {
