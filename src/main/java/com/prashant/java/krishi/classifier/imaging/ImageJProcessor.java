@@ -8,6 +8,7 @@ import ij.measure.ResultsTable;
 import ij.plugin.filter.ParticleAnalyzer;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.Collection;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  *
  */
+@Slf4j
 public class ImageJProcessor implements ImageProcessor {
 
     private static final int options =
@@ -45,15 +47,13 @@ public class ImageJProcessor implements ImageProcessor {
 
         final ResultsTable resultTable = new ResultsTable();
         ParticleAnalyzer pa = new ParticleAnalyzer(measurements, options, resultTable, min, max);
-        // pa.setHideOutputImage(true);
+        pa.setHideOutputImage(true);
         pa.analyze(img);
         img.close();
 
-
         final ResultToDimensions result = new ResultToDimensions(resultTable, imageFile);
 
-        return IntStream.range(0, resultTable.getCounter())
-            .mapToObj(result::dimension)
+        return IntStream.range(0, resultTable.getCounter()).mapToObj(result::dimension).filter(d -> d.getArea() >= 400)
             .collect(Collectors.toList());
     }
 
@@ -63,9 +63,9 @@ public class ImageJProcessor implements ImageProcessor {
         private final File file;
 
         private GrainDimensions dimension(int i) {
+            log.info("Processing element {}", i);
             GrainDimensions dimension = GrainDimensions.createFromRow(resultsTable.getRowAsString(i));
-            return dimension.withFileParticleName("ID:#" + (i + 1))
-                .withFilePath(file.getPath())
+            return dimension.withFileParticleName("ID:#" + (i + 1)).withFilePath(file.getPath())
                 .withFileName(file.getName());
         }
 

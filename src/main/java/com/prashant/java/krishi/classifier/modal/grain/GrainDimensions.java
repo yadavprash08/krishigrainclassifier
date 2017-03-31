@@ -42,73 +42,59 @@ public class GrainDimensions {
 
     static {
         Arrays.stream(GrainDimensions.class.getDeclaredFields())
-                .filter(f -> Objects.nonNull(f.getAnnotation(InstanceTranslation.class)))
-                .map(DimensionsMetadata::new)
-                .forEachOrdered(dimensionMetadatas::add);
+            .filter(f -> Objects.nonNull(f.getAnnotation(InstanceTranslation.class))).map(DimensionsMetadata::new)
+            .forEachOrdered(dimensionMetadatas::add);
     }
 
-    @Wither
-    private String fileName;
-    @Wither
-    private String filePath;
-    @Wither
-    private String fileParticleName;
-    @InstanceTranslation(1)
-    private Double area;
-    @InstanceTranslation(2)
-    private Double perimeter;
-    @InstanceTranslation(3)
-    private Double bx;
-    @InstanceTranslation(4)
-    private Double by;
-    @InstanceTranslation(5)
-    private Double width;
-    @InstanceTranslation(6)
-    private Double height;
-    @InstanceTranslation(7)
-    private Double major;
-    @InstanceTranslation(8)
-    private Double minor;
-    @InstanceTranslation(9)
-    private Double angle;
-    @InstanceTranslation(10)
-    private Double circumference;
-    @InstanceTranslation(11)
-    private Double feret;
-    @InstanceTranslation(12)
-    private Double feretx;
-    @InstanceTranslation(13)
-    private Double ferety;
-    @InstanceTranslation(14)
-    private Double feretAngle;
-    @InstanceTranslation(15)
-    private Double minFeret;
-    @InstanceTranslation(16)
-    private Double round;
-    @InstanceTranslation(17)
-    private Double solidity;
-    @Wither
-    private String grainType;
-    @Wither
-    private String particleType;
+    @Wither private String fileName;
+    @Wither private String filePath;
+    @Wither private String fileParticleName;
+    @InstanceTranslation(1) private Double area;
+    @InstanceTranslation(2) private Double perimeter;
+    //    @InstanceTranslation(3)
+    //    private Double bx;
+    //    @InstanceTranslation(4)
+    //    private Double by;
+    //    @InstanceTranslation(5)
+    //    private Double width;
+    //    @InstanceTranslation(6)
+    //    private Double height;
+    @InstanceTranslation(7) private Double major;
+    @InstanceTranslation(8) private Double minor;
+    //    @InstanceTranslation(9)
+    //    private Double angle;
+    //    @InstanceTranslation(10)
+    //    private Double circumference;
+    //    @InstanceTranslation(11)
+    //    private Double feret;
+    //    @InstanceTranslation(12)
+    //    private Double feretx;
+    //    @InstanceTranslation(13)
+    //    private Double ferety;
+    //    @InstanceTranslation(14)
+    //    private Double feretAngle;
+    //    @InstanceTranslation(15)
+    //    private Double minFeret;
+    //    @InstanceTranslation(16)
+    //    private Double round;
+    @InstanceTranslation(17) private Double solidity;
+    @Wither private String grainType;
+    @Wither private String particleType;
 
     public static GrainDimensions createFromRow(String imageParticleRow) {
-        final Double[] dimensions = Arrays.stream(StringUtils.split(imageParticleRow, "\t"))
-                .map(Double::parseDouble)
-                .collect(Collectors.toList())
-                .toArray(new Double[]{});
+        final Double[] dimensions = Arrays.stream(StringUtils.split(imageParticleRow, "\t")).map(Double::parseDouble)
+            .collect(Collectors.toList()).toArray(new Double[] {});
         GrainDimensions dimension = new GrainDimensions();
-        dimensionMetadatas.stream()
-                .filter(f -> f.getInstanceIndex() < dimensions.length)
-                .forEachOrdered(f -> f.setFieldValue(dimensions, dimension));
+        dimensionMetadatas.stream().filter(f -> f.getInstanceIndex() < dimensions.length)
+            .forEachOrdered(f -> f.setFieldValue(dimensions, dimension));
         return dimension;
     }
 
-    public ParticleType particleType(){
+    public ParticleType particleType() {
         return ParticleType.fromString(this.particleType);
     }
 
-    public GrainType grainType(){
+    public GrainType grainType() {
         return GrainType.fromString(this.grainType);
     }
 
