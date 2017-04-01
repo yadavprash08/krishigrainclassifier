@@ -69,9 +69,7 @@ public class Application {
             } else {
                 ImageAnalyzer imageAnalyzer = injector.getInstance(ImageAnalyzer.class);
                 WheatAnalysisReport report = imageAnalyzer.processImage(arguments.getImageToProcess());
-                OutputStreamWriter writer = new OutputStreamWriter(System.out);
-                report.generateReport(writer);
-                writer.flush();
+                report.generateReport(arguments.outputWriter());
             }
         } catch (CmdLineException e) {
             parser.printUsage(System.out);

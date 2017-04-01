@@ -1,52 +1,83 @@
 package com.prashant.java.krishi.classifier.report;
 
 import com.prashant.java.krishi.classifier.modal.grain.GrainDimensions;
-import com.prashant.java.krishi.classifier.modal.grain.type.GrainType;
-import com.prashant.java.krishi.classifier.modal.grain.type.ParticleType;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
- *
+ * This is the class to generate the reports for the classifications done in the program.
  */
+@Slf4j
 public class WheatAnalysisReport implements Consumer<GrainDimensions> {
 
-    private final EnumMap<GrainType, List<GrainDimensions>> grainTypeMap = new EnumMap<>(GrainType.class);
+    private static final String COMMA_DELIMIT = ",";
+    private static final String CR_LN = "\n";
+    private final List<GrainDimensions> allGrains = new ArrayList<>();
     private final AtomicInteger totalParticles = new AtomicInteger(0);
 
     @Override
     public void accept(GrainDimensions dimension) {
         System.out.println(dimension);
         totalParticles.incrementAndGet();
-        grainTypeMap.computeIfAbsent(dimension.grainType(), (p) -> new ArrayList<>()).add(dimension);
+        allGrains.add(dimension);
     }
 
     public void generateReport(Writer writer) throws IOException {
-        final int i = totalParticles.get();
-        writer.write(MessageFormat.format("Total particles identified: #{0}\n\n", i));
+        log.info("Adding the header for the csv file using writer {}.", writer);
+        GrainDimensions.writeToCsvHeaders(writer);
+        final int totalProcessedParticles = totalParticles.get();
+        log.info("Total analysed particles: {}", totalProcessedParticles);
+        for (GrainDimensions g : allGrains) {
+            writer.write(g.toCSVString());
+        }
+
+        final String newLineGap = IntStream.range(0, 10).mapToObj(i -> "\n").collect(Collectors.joining());
+
+        writer.write(newLineGap);
         writer.write("Particle Type Analysis\n");
-        final StringBuilder builder = new StringBuilder();
-        grainTypeMap.forEach((k, v) -> {
-            final int size = v.size();
-            builder.append(k.toString()).append(": ")
-                .append(size).append("(")
-                .append(((double) size / (double) i)).append(")")
-                .append(":: ");
-            v.stream().map(this::dimensionToString).forEach(builder::append);
-            builder.append("\n");
-        });
-        writer.write(builder.toString());
+
+        writeCollectiveStat(writer, w -> w.particleType().toString());
+
+        writer.write(newLineGap);
+        writer.write("Grain Type Analysis\n");
+
+        writeCollectiveStat(writer, w -> w.grainType().toString());
+
+        writer.flush();
     }
 
-    private String dimensionToString(GrainDimensions dimension) {
-        return Optional.ofNullable(dimension).map(GrainDimensions::getFileParticleName).orElse("_____") + ", ";
+    public void writeCollectiveStat(Writer writer, Function<GrainDimensions, String> getParticleType)
+        throws IOException {
+        final Map<String, List<GrainDimensions>> particleTypeMap = allGrains.parallelStream()
+            .collect(Collectors.groupingBy(getParticleType));
+        String particleTypeAnalysis = dumpMapStats(particleTypeMap);
+        writer.write(particleTypeAnalysis);
+    }
+
+    private String dumpMapStats(Map<String, List<GrainDimensions>> particleTypeMap) {
+        final int totalProcessedParticles = totalParticles.get();
+        final StringBuilder header = new StringBuilder("TotalParticles");
+        final StringBuilder count = new StringBuilder("#" + totalProcessedParticles);
+        final StringBuilder percentage = new StringBuilder("-");
+        particleTypeMap.forEach((k, v) -> {
+            final int size = v.size();
+            final double p = ((double) totalProcessedParticles) / ((double) size) * 100;
+            header.append(COMMA_DELIMIT).append(Objects.toString(k));
+            count.append(COMMA_DELIMIT).append(size);
+            percentage.append(COMMA_DELIMIT).append(String.format("%.2f", p)).append("%");
+        });
+
+        return header.toString() + CR_LN + count.toString() + CR_LN + percentage.toString() + CR_LN;
     }
 }
