@@ -39,6 +39,9 @@ public class AppArguments {
 
     @Option(name = "-outputFile", usage = "Name for the output file to write the data into.") private String outputFile;
 
+    @Option(name = "-dumpJson", usage = "Dump the data in json format into a javascript. This option will only work "
+        + "with outputFile") private boolean dumpJson;
+
     @Option(name = "-help") private boolean help;
 
     public Reader getModalInputSupplier() {
@@ -78,5 +81,15 @@ public class AppArguments {
             throw new RuntimeException(e);
         }
         //        throw new IllegalArgumentException("Unable to define the output pattern.");
+    }
+
+    /**
+     * This is the json writer which can write the json data in java script consumable format.
+     *
+     * @return Json {@link Writer}
+     */
+    public Writer jsonWriter() throws IOException {
+        Objects.requireNonNull(outputFile);
+        return Files.newBufferedWriter(Paths.get(outputFile + ".js"), CREATE, TRUNCATE_EXISTING);
     }
 }

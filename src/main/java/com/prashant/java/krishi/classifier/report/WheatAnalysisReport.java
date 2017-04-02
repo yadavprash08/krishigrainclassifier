@@ -1,8 +1,11 @@
 package com.prashant.java.krishi.classifier.report;
 
+import com.google.gson.Gson;
 import com.prashant.java.krishi.classifier.modal.grain.GrainDimensions;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -21,10 +24,17 @@ import java.util.stream.IntStream;
 @Slf4j
 public class WheatAnalysisReport implements Consumer<GrainDimensions> {
 
+    @NonNull private final Gson gson;
+
     private static final String COMMA_DELIMIT = ",";
     private static final String CR_LN = "\n";
     private final List<GrainDimensions> allGrains = new ArrayList<>();
     private final AtomicInteger totalParticles = new AtomicInteger(0);
+
+    @Inject
+    public WheatAnalysisReport(Gson gson) {
+        this.gson = gson;
+    }
 
     @Override
     public void accept(GrainDimensions dimension) {
@@ -79,5 +89,14 @@ public class WheatAnalysisReport implements Consumer<GrainDimensions> {
         });
 
         return header.toString() + CR_LN + count.toString() + CR_LN + percentage.toString() + CR_LN;
+    }
+
+    public void dumpJsFile(Writer jsonWriter) throws IOException {
+        jsonWriter.write("var wg=[");
+        String jsData = allGrains.stream().map(gson::toJson).collect(Collectors.joining(",\n"));
+        jsonWriter.write(jsData);
+        jsonWriter.write("];\n\n");
+        jsonWriter.flush();
+        jsonWriter.close();
     }
 }

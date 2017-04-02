@@ -14,6 +14,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.text.MessageFormat;
@@ -49,6 +50,12 @@ public class Application {
             ImageAnalyzer imageAnalyzer = injector.getInstance(ImageAnalyzer.class);
             WheatAnalysisReport report = imageAnalyzer.processImage(arguments.getImageToProcess());
             report.generateReport(arguments.outputWriter());
+
+            if (arguments.isDumpJson()) {
+                final Writer writer = arguments.jsonWriter();
+                report.dumpJsFile(writer);
+                writer.close();
+            }
 
         } catch (CmdLineException e) {
             parser.printUsage(System.out);
