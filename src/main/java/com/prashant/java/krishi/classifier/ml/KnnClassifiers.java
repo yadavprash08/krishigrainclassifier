@@ -33,9 +33,9 @@ public class KnnClassifiers implements Classifiers {
     public KnnClassifiers(@NonNull ModalReader modalReader) {
         log.info("Creating the classifier using the modalReader: {}", modalReader);
         grainTypeClassifier = new KNearestNeighbors(K);
-        grainTypeClassifier.buildClassifier(modalReader.immatureDataset());
+        grainTypeClassifier.buildClassifier(modalReader.grainTypeDataset());
         particleTypeClassifier = new KNearestNeighbors(K);
-        particleTypeClassifier.buildClassifier(modalReader.foreignDataset());
+        particleTypeClassifier.buildClassifier(modalReader.particleTypeDataset());
     }
 
     @Override

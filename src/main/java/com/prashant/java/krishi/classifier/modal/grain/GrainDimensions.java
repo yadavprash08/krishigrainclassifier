@@ -82,6 +82,12 @@ public class GrainDimensions {
         return dimension;
     }
 
+    public static void writeToCsvHeaders(@NonNull final Writer writer) throws IOException {
+        final StringBuilder headers = new StringBuilder("FileName,Particle,GrainType,ParticleTypes");
+        DIMENSIONS_METADATA.stream().forEach(s -> headers.append(COMMA_DELIMIT).append(s.field.getName()));
+        writer.write(headers.append(CRLN).toString());
+    }
+
     public ParticleType particleType() {
         return ParticleType.fromString(this.particleType);
     }
@@ -117,12 +123,6 @@ public class GrainDimensions {
             log.error(e.getMessage(), e);
         }
         return this;
-    }
-
-    public static void writeToCsvHeaders(@NonNull final Writer writer) throws IOException {
-        final StringBuilder headers = new StringBuilder("FileName,Particle,GrainType,ParticleTypes");
-        DIMENSIONS_METADATA.stream().forEach(s -> headers.append(COMMA_DELIMIT).append(s.field.getName()));
-        writer.write(headers.append(CRLN).toString());
     }
 
     public String toCSVString() {

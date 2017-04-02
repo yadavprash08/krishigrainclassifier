@@ -12,8 +12,12 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
+
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 /**
  *
@@ -59,10 +63,20 @@ public class AppArguments {
         return new File(processImage);
     }
 
+    /**
+     * Defines the output writer for the report of the analysis.
+     *
+     * @return Output {@link Writer} for the report.
+     */
     public Writer outputWriter() {
         if (Objects.isNull(outputFile)) {
             return new OutputStreamWriter(System.out);
         }
-        return null;
+        try {
+            return Files.newBufferedWriter(Paths.get(outputFile), CREATE, TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        //        throw new IllegalArgumentException("Unable to define the output pattern.");
     }
 }

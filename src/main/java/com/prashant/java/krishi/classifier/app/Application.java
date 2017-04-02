@@ -13,7 +13,7 @@ import org.assertj.core.util.Arrays;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
-import java.io.OutputStreamWriter;
+import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.text.MessageFormat;
@@ -43,41 +43,44 @@ public class Application {
             final Injector injector = Guice.createInjector(app);
             assertThat(injector).isNotNull();
             if (arguments.isAddToStore()) {
-                assertThat(arguments.getSourceDatasetFileName()).isNotEmpty();
-                assertThat(arguments.getGrainType()).isNotEmpty();
-                assertThat(arguments.getParticleType()).isNotEmpty();
-
-                ParticleType particleType = ParticleType.fromString(arguments.getParticleType());
-                GrainType grainType = GrainType.fromString(arguments.getGrainType());
-
-                final Gson gson = injector.getInstance(Gson.class);
-
-                final Path sourceDataSetPath = arguments.getSourceDataSetPath().get();
-                final SeekableByteChannel byteChannel = newByteChannel(sourceDataSetPath, CREATE, APPEND);
-
-                // All the required arguments are not null anymore so we can process the image now.
-                log.info(
-                    MessageFormat.format("Processing the image as {0} grains of type {1}", particleType, grainType));
-
-                ImageProcessor processor = injector.getInstance(ImageProcessor.class);
-                processor.processImage(arguments.getImageToProcess()).stream()
-                    .map(a -> a.withParticleType(particleType.getStringValue()))
-                    .map(a -> a.withGrainType(grainType.getStringValue())).map(Application::logGrainDimenstions)
-                    .forEach(a -> a.writeToChannel(gson, byteChannel));
-                byteChannel.close();
-
-            } else {
-                ImageAnalyzer imageAnalyzer = injector.getInstance(ImageAnalyzer.class);
-                WheatAnalysisReport report = imageAnalyzer.processImage(arguments.getImageToProcess());
-                report.generateReport(arguments.outputWriter());
+                addFileToDataStore(arguments, injector);
+                return;
             }
+            ImageAnalyzer imageAnalyzer = injector.getInstance(ImageAnalyzer.class);
+            WheatAnalysisReport report = imageAnalyzer.processImage(arguments.getImageToProcess());
+            report.generateReport(arguments.outputWriter());
+
         } catch (CmdLineException e) {
             parser.printUsage(System.out);
             throw new RuntimeException("Invalid Arguments", e);
         }
     }
 
-    public static GrainDimensions logGrainDimenstions(final GrainDimensions a) {
+    private static void addFileToDataStore(AppArguments arguments, Injector injector) throws IOException {
+        assertThat(arguments.getSourceDatasetFileName()).isNotEmpty();
+        assertThat(arguments.getGrainType()).isNotEmpty();
+        assertThat(arguments.getParticleType()).isNotEmpty();
+
+        ParticleType particleType = ParticleType.fromString(arguments.getParticleType());
+        GrainType grainType = GrainType.fromString(arguments.getGrainType());
+
+        final Gson gson = injector.getInstance(Gson.class);
+
+        final Path sourceDataSetPath = arguments.getSourceDataSetPath().get();
+        final SeekableByteChannel byteChannel = newByteChannel(sourceDataSetPath, CREATE, APPEND);
+
+        // All the required arguments are not null anymore so we can process the image now.
+        log.info(MessageFormat.format("Processing the image as {0} grains of type {1}", particleType, grainType));
+
+        ImageProcessor processor = injector.getInstance(ImageProcessor.class);
+        processor.processImage(arguments.getImageToProcess()).stream()
+            .map(a -> a.withParticleType(particleType.getStringValue()))
+            .map(a -> a.withGrainType(grainType.getStringValue())).map(Application::logGrainDimenstions)
+            .forEach(a -> a.writeToChannel(gson, byteChannel));
+        byteChannel.close();
+    }
+
+    private static GrainDimensions logGrainDimenstions(final GrainDimensions a) {
         log.info("Adding Image Particle: {}", a);
         return a;
     }

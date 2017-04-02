@@ -51,7 +51,7 @@ public class ModalReader {
      *
      * @return Dataset for all the attributes with proper class values for immature class.
      */
-    public Dataset immatureDataset() {
+    public Dataset grainTypeDataset() {
         final Dataset dataset = new DefaultDataset();
         this.dimensions.parallelStream()
             .filter(w -> StringUtils.isNotBlank(w.getGrainType()))
@@ -65,7 +65,7 @@ public class ModalReader {
      *
      * @return Dataset for all the attributes with proper class values for foreign class.
      */
-    public Dataset foreignDataset() {
+    public Dataset particleTypeDataset() {
         final Dataset dataset = new DefaultDataset();
         this.dimensions.parallelStream()
             .filter(w -> StringUtils.isNotBlank(w.getParticleType()))
